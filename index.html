@@ -1,118 +1,261 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>2D DJ Tafel</title>
+    <title>DJ Table</title>
     <style>
         body {
             background-color: #000;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
         }
-        
-        #dj-table {
-            position: relative;
-            width: 800px;
-            height: 500px;
-            margin: 50px auto;
-            background-color: #222;
+        .dj-table {
+            background-color: #333;
+            padding: 20px;
             border-radius: 10px;
-            overflow: hidden;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
         }
-        
-        .turntable {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 250px;
-            height: 250px;
-            background-color: #444;
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        }
-        
-        .slider-container {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 300px;
-        }
-        
-        .slider-label {
+        .dj-table button {
+            padding: 10px 20px;
+            background-color: #7289DA;
             color: #FFF;
-            font-size: 14px;
-            margin-bottom: 5px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
         }
-        
-        .slider {
+        .dj-table input[type="range"] {
+            width: 200px;
             -webkit-appearance: none;
-            width: 100%;
-            height: 10px;
-            background-color: #888;
+            background-color: #555;
+            height: 5px;
+            border-radius: 2.5px;
             outline: none;
-            border-radius: 5px;
+            margin-top: 5px;
         }
-        
-        .slider::-webkit-slider-thumb {
+        .dj-table input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background-color: #FFF;
+            width: 10px;
+            height: 10px;
+            background-color: #7289DA;
             border-radius: 50%;
             cursor: pointer;
         }
-        
-        .slider::-webkit-slider-thumb:hover {
-            background-color: #DDD;
+        .dj-table .volume-label {
+            color: #FFF;
+            text-align: center;
         }
-        
-        /* Animation */
-        @keyframes bassAnimation {
-            0% {
-                background-color: #FF0000;
-            }
-            50% {
-                background-color: #FF4500;
-            }
-            100% {
-                background-color: #FF8C00;
-            }
+        .dj-table .bass-label,
+        .dj-table .treble-label {
+            color: #FFF;
+            text-align: center;
+            margin-top: 10px;
         }
-        
-        .bass-animation {
-            animation-name: bassAnimation;
-            animation-duration: 500ms;
+        .dj-table .effect-label {
+            color: #FFF;
+            text-align: center;
+            margin-top: 20px;
         }
     </style>
-    <script>
-        function playBassAnimation() {
-            var djTable = document.getElementById('dj-table');
-            djTable.classList.add('bass-animation');
-            
-            setTimeout(function() {
-                djTable.classList.remove('bass-animation');
-            }, 500);
-        }
-    </script>
 </head>
 <body>
-    <div id="dj-table">
-        <div class="turntable"></div>
-        <div class="turntable"></div>
-        
-        <div class="slider-container">
-            <label class="slider-label">Bass</label>
-            <input type="range" class="slider" min="0" max="100" value="50" oninput="playBassAnimation()">
-            
-            <label class="slider-label">Volume</label>
-            <input type="range" class="slider" min="0" max="100" value="50">
-            
-            <label class="slider-label">Treble</label>
-            <input type="range" class="slider" min="0" max="100" value="50">
+    <div class="dj-table">
+        <div>
+            <button id="play-button">Play</button>
+            <button id="pause-button">Pause</button>
+            <button id="stop-button">Stop</button>
+        </div>
+        <div>
+            <label class="volume-label">Volume: <span id="volume-value">100</span>%</label>
+            <input type="range" id="volume-slider" min="0" max="100" value="100">
+        </div>
+        <div>
+            <label class="bass-label">Bass: <span id="bass-value">0</span></label>
+            <input type="range" id="bass-slider" min="-10" max="10" value="0">
+        </div>
+        <div>
+            <label class="treble-label">Treble: <span id="treble-value">0</span></label>
+            <input type="range" id="treble-slider" min="-10" max="10" value="0">
+        </div>
+        <div>
+            <label class="effect-label">Effect:</label>
+            <select id="effect-select">
+                <option value="none">None</option>
+                <option value="delay">Delay</option>
+                <option value="reverb">Reverb</option>
+                <option value="chorus">Chorus</option>
+            </select>
         </div>
     </div>
+
+    <script>
+        var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        var audioSource;
+        var volumeNode;
+        var bassNode;
+        var trebleNode;
+        var effectNode;
+
+        // Load audio file
+        function loadAudioFile(file) {
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+                var audioData = e.target.result;
+
+                audioContext.decodeAudioData(audioData, function(decodedData) {
+                    if (audioSource) {
+                        audioSource.stop();
+                    }
+
+                    audioSource = audioContext.createBufferSource();
+                    audioSource.buffer = decodedData;
+
+                    connectNodes();
+
+                    audioSource.start();
+                });
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Connect audio nodes
+        function connectNodes() {
+            if (audioSource) {
+                volumeNode = audioContext.createGain();
+                bassNode = audioContext.createBiquadFilter();
+                trebleNode = audioContext.createBiquadFilter();
+                effectNode = null;
+
+                // Connect nodes
+                audioSource.connect(volumeNode);
+                volumeNode.connect(bassNode);
+                bassNode.connect(trebleNode);
+                trebleNode.connect(audioContext.destination);
+            }
+        }
+
+        // Update volume
+        function updateVolume(value) {
+            if (volumeNode) {
+                var volume = value / 100;
+                volumeNode.gain.value = volume;
+                document.getElementById('volume-value').textContent = value;
+            }
+        }
+
+        // Update bass
+        function updateBass(value) {
+            if (bassNode) {
+                var bass = value;
+                bassNode.type = 'lowshelf';
+                bassNode.frequency.value = 200;
+                bassNode.gain.value = bass;
+                document.getElementById('bass-value').textContent = value;
+            }
+        }
+
+        // Update treble
+        function updateTreble(value) {
+            if (trebleNode) {
+                var treble = value;
+                trebleNode.type = 'highshelf';
+                trebleNode.frequency.value = 2000;
+                trebleNode.gain.value = treble;
+                document.getElementById('treble-value').textContent = value;
+            }
+        }
+
+        // Apply effect
+        function applyEffect(value) {
+            if (effectNode) {
+                effectNode.disconnect();
+                effectNode = null;
+            }
+
+            if (value === 'delay') {
+                effectNode = audioContext.createDelay();
+                effectNode.delayTime.value = 0.5; // Adjust delay time as desired
+                audioSource.connect(effectNode);
+                effectNode.connect(volumeNode);
+            } else if (value === 'reverb') {
+                effectNode = audioContext.createConvolver();
+                // Load impulse response for reverb effect
+                var impulseURL = 'https://example.com/impulse-response.wav'; // Replace with your own impulse response file
+                var impulseRequest = new XMLHttpRequest();
+                impulseRequest.open('GET', impulseURL, true);
+                impulseRequest.responseType = 'arraybuffer';
+                impulseRequest.onload = function() {
+                    audioContext.decodeAudioData(impulseRequest.response, function(buffer) {
+                        effectNode.buffer = buffer;
+                    });
+                };
+                impulseRequest.send();
+                audioSource.connect(effectNode);
+                effectNode.connect(volumeNode);
+            } else if (value === 'chorus') {
+                effectNode = audioContext.createGain();
+                var chorusNode1 = audioContext.createDelay();
+                var chorusNode2 = audioContext.createDelay();
+                var chorusLFO = audioContext.createOscillator();
+                chorusLFO.frequency.value = 0.2; // Adjust LFO frequency as desired
+                chorusNode1.delayTime.value = 0.03; // Adjust delay time as desired
+                chorusNode2.delayTime.value = 0.07; // Adjust delay time as desired
+                chorusLFO.connect(chorusNode1.delayTime);
+                chorusLFO.connect(chorusNode2.delayTime);
+                audioSource.connect(effectNode);
+                effectNode.connect(volumeNode);
+                effectNode.connect(chorusNode1);
+                effectNode.connect(chorusNode2);
+                chorusNode1.connect(volumeNode);
+                chorusNode2.connect(volumeNode);
+                chorusLFO.start();
+            }
+        }
+
+        // Event listeners
+        document.getElementById('volume-slider').addEventListener('input', function(event) {
+            updateVolume(event.target.value);
+        });
+
+        document.getElementById('bass-slider').addEventListener('input', function(event) {
+            updateBass(event.target.value);
+        });
+
+        document.getElementById('treble-slider').addEventListener('input', function(event) {
+            updateTreble(event.target.value);
+        });
+
+        document.getElementById('effect-select').addEventListener('change', function(event) {
+            applyEffect(event.target.value);
+        });
+
+        document.getElementById('play-button').addEventListener('click', function() {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        });
+
+        document.getElementById('pause-button').addEventListener('click', function() {
+            if (audioContext.state === 'running') {
+                audioContext.suspend();
+            }
+        });
+
+        document.getElementById('stop-button').addEventListener('click', function() {
+            if (audioSource) {
+                audioSource.stop();
+            }
+        });
+
+        document.getElementById('audio-file').addEventListener('change', function(event) {
+            var file = event.target.files[0];
+            loadAudioFile(file);
+        });
+    </script>
 </body>
 </html>

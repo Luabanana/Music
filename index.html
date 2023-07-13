@@ -68,7 +68,35 @@
         .slider::-webkit-slider-thumb:hover {
             background-color: #DDD;
         }
+        
+        /* Animation */
+        @keyframes bassAnimation {
+            0% {
+                background-color: #FF0000;
+            }
+            50% {
+                background-color: #FF4500;
+            }
+            100% {
+                background-color: #FF8C00;
+            }
+        }
+        
+        .bass-animation {
+            animation-name: bassAnimation;
+            animation-duration: 500ms;
+        }
     </style>
+    <script>
+        function playBassAnimation() {
+            var djTable = document.getElementById('dj-table');
+            djTable.classList.add('bass-animation');
+            
+            setTimeout(function() {
+                djTable.classList.remove('bass-animation');
+            }, 500);
+        }
+    </script>
 </head>
 <body>
     <div id="dj-table">
@@ -77,7 +105,7 @@
         
         <div class="slider-container">
             <label class="slider-label">Bass</label>
-            <input type="range" class="slider" min="0" max="100" value="50">
+            <input type="range" class="slider" min="0" max="100" value="50" oninput="playBassAnimation()">
             
             <label class="slider-label">Volume</label>
             <input type="range" class="slider" min="0" max="100" value="50">

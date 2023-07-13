@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2D DJ Tafel</title>
+    <style>
+        body {
+            background-color: #000;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        #dj-table {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            margin: 50px auto;
+            background-color: #222;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .turntable {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            background-color: #444;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .slider-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+        }
+        
+        .slider-label {
+            color: #FFF;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            background-color: #888;
+            outline: none;
+            border-radius: 5px;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background-color: #FFF;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            background-color: #DDD;
+        }
+    </style>
+</head>
+<body>
+    <div id="dj-table">
+        <div class="turntable"></div>
+        <div class="turntable"></div>
+        
+        <div class="slider-container">
+            <label class="slider-label">Bass</label>
+            <input type="range" class="slider" min="0" max="100" value="50">
+            
+            <label class="slider-label">Volume</label>
+            <input type="range" class="slider" min="0" max="100" value="50">
+            
+            <label class="slider-label">Treble</label>
+            <input type="range" class="slider" min="0" max="100" value="50">
+        </div>
+    </div>
+</body>
+</html>
